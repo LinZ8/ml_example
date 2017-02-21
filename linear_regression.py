@@ -51,6 +51,18 @@ def deri_j(h,theta,y,x):
 def linear_regre(theta,x_train):
     return np.dot(theta,x_train.T)
 
+def normalize(x):
+    x = (x - x.mean())/(x.max()-x.min())
+    return x
+
+def theta_denormal(theta,x,y):
+    theta_deno =np.zeros(len(theta))
+    for i in range(len(theta)-1):
+        theta_deno[i+1] = theta[i+1]*(y.max()-y.min())/(x[:,i+1].max()-x[:,i+1].min())
+        theta_deno[0] = theta_deno[0] - theta[i+1]*x[:,i+1].mean()/(x[:,i+1].max()-
+                                                                    x[:,i+1].min())
+    theta_deno[0] = (theta[0]+theta_deno[0])*(y.max()-y.min())+y.mean()
+    return theta_deno
     
 #df_train, df_test, dfy_train, dfy_test = readindata()
 house = [1400.,1600.,1700.,1875.,1100.,1550.,2350.,2450.,1425.,1700.]
@@ -64,24 +76,36 @@ x_train[:,1:] =np.array(df_train.values)
 #x_test[:,1:] = np.array(df_test.values)
 y_train = np.array(dfy_train.values)
 #y_test = np.array(dfy_test.values)
+
 #set the initial guess of parameters and the learning rate
 #theta = np.ones(len(df_train.columns)+1)
-theta = np.array([90,0.5])
+theta = np.array([0.5,0.5])
 der_j = np.zeros(len(df_train.columns)+1)
 cost_j = 1.0
 cost_j_hist = []
-alfa = 0.001
-h = linear_regre(theta,x_train)
-minsquare_j(h,y_train)
+alfa = 0.3
+
+x_train_norm = np.ones((len(y_train),len(theta)))
+y_train_norm = np.ones(len(y_train))
+for i in range(len(theta)-1):
+    x_train_norm[:,i+1] = normalize(x_train[:,i+1])
+y_train_norm[:] = normalize(y_train)
+    
+    
+h = linear_regre(theta,x_train_norm)
+minsquare_j(h,y_train_norm)
 cost_j_hist.append(cost_j)
 
-for i in range(50):
-    der_j = deri_j(h,theta,y_train,x_train)
+for i in range(100):
+    der_j = deri_j(h,theta,y_train_norm,x_train_norm)
     #break
     theta = update_theta(theta,alfa,der_j)
-    h = linear_regre(theta,x_train)
+    h = linear_regre(theta,x_train_norm)
     #break
-    cost_j = minsquare_j(h,y_train)
+    cost_j = minsquare_j(h,y_train_norm)
     cost_j_hist.append(cost_j)
 
+theta_denor = theta_denormal(theta,x_train,y_train)
+
+y_denor = linear_regre(theta_denor,x_train)
                            
